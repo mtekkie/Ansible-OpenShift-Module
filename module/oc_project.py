@@ -61,24 +61,7 @@ EXAMPLES = '''
 - oc_buildconfig:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
-    name: abba
-    project: downloader
-    triggers: []
-    source:
-      type: Dockerfile
-      dockerfile: 'FROM centos:7\n ENV LANG en_US.UTF-8 \n RUN yum install -y epel-release....'
-      secrets: null
-    strategy:
-      type: Docker
-      dockerStrategy:
-        env:
-          - name: MY_BUILD_VAR
-            value: Sierra Mike Echo
-    output:
-      to:
-        kind: ImageStreamTag
-        namespace: downloader
-        name: 'abba:latest'
+    project: masterminder
 '''
 
 RETURN = '''
