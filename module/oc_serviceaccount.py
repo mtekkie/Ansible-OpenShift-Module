@@ -129,7 +129,7 @@ def main():
 
     except urllib2.HTTPError as sc:
 
-        if not has_project(module.params):
+        if not has_project(module):
             module.fail_json(msg="Project does not exist")
 
         if sc.code == 404 and module.params.get("state") == "present":
@@ -213,10 +213,10 @@ def compliant (is_obj, should_be):
 
 # Checks if project exist.
 # Returns True/False
-def has_project(params):
+def has_project(module):
     try:
-        path = "projects/"+params["project"]
-        http_get(path, params)
+        path = "projects/"+module.params["project"]
+        http_get(path, module)
     except urllib2.HTTPError as sc:
         if sc.code == 404:
             return False
