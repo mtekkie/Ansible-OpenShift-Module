@@ -253,9 +253,12 @@ def main():
         else:
             #Set resourceVersion in should_be.
             should_be['metadata']['resourceVersion']=current['metadata']['resourceVersion']
+            #Copy Latest Version
+            should_be['status'] = current['status']
+
             result = http_put(PATH, module, dict_to_json(should_be))
             facts = json_to_dict(result)
-            module.exit_json(changed=True, ansible_facts=facts)
+            module.exit_json(changed=True, ansible_facts=facts )
 
     except urllib2.HTTPError as sc:
 
