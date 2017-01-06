@@ -89,7 +89,7 @@ def main():
         )
     )
 
-    SERVICE  = "projects/"
+    SERVICE  = API_BASE+"/projects/"
     PATH = SERVICE+module.params.get("project")
 
     TEMPLATE = '''
@@ -134,7 +134,7 @@ def main():
 
 ########################### Helper functions ###################################
 #
-# This section contains helper fuctions
+# This section contains helper fuctions v20170106
 #
 ################################################################################
 
@@ -204,10 +204,10 @@ def compliant (is_obj, should_be):
 
 # Checks if project exist.
 # Returns True/False
-def has_project(params):
+def has_project(module):
     try:
-        path = "projects/"+params["project"]
-        http_get(path, params)
+        path = "/oapi/v1/projects/"+module.params["project"]
+        http_get(path, module)
     except urllib2.HTTPError as sc:
         if sc.code == 404:
             return False
@@ -245,7 +245,7 @@ def http_delete(path, module):
 
 def http_request(method, path, module, data):
     try:
-        url = module.params.get("master_url")+API_BASE+"/"+path
+        url = module.params.get("master_url")+path
         #opener = urllib2.build_opener(urllib2.HTTPHandler)
         headers = {'Authorization': 'Bearer '+module.params.get("auth_token")}
 
@@ -290,6 +290,7 @@ def http_request(method, path, module, data):
     except urllib2.URLError as ue:
         module.fail_json(msg="Open Shift Master is unreachable. Check connection and master_url setting.")
 ########################### End of helper functions ############################
+
 
 
 from ansible.module_utils.basic import AnsibleModule

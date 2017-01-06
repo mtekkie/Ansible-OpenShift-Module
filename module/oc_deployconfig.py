@@ -212,7 +212,7 @@ def main():
         )
     )
 
-    SERVICE  = "namespaces/"+module.params.get("project")+"/deploymentconfigs/"
+    SERVICE  = API_BASE+"/namespaces/"+module.params.get("project")+"/deploymentconfigs/"
     PATH = SERVICE+module.params.get("name")
 
     TEMPLATE = '''
@@ -275,7 +275,7 @@ def main():
 
 ########################### Helper functions ###################################
 #
-# This section contains helper fuctions
+# This section contains helper fuctions v20170106
 #
 ################################################################################
 
@@ -347,7 +347,7 @@ def compliant (is_obj, should_be):
 # Returns True/False
 def has_project(module):
     try:
-        path = "projects/"+module.params["project"]
+        path = "/oapi/v1/projects/"+module.params["project"]
         http_get(path, module)
     except urllib2.HTTPError as sc:
         if sc.code == 404:
@@ -386,7 +386,7 @@ def http_delete(path, module):
 
 def http_request(method, path, module, data):
     try:
-        url = module.params.get("master_url")+API_BASE+"/"+path
+        url = module.params.get("master_url")+path
         #opener = urllib2.build_opener(urllib2.HTTPHandler)
         headers = {'Authorization': 'Bearer '+module.params.get("auth_token")}
 
