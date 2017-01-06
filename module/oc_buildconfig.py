@@ -261,6 +261,9 @@ def main():
             module.exit_json(changed=True, ansible_facts=facts)
 
     except urllib2.HTTPError as sc:
+        if not has_project(module.params):
+            module.fail_json(msg="Project does not exist")
+            
         if sc.code == 404 and module.params.get("state") == "present":
             result = http_post(SERVICE, module, should_be_json)
             facts = json_to_dict(result)
@@ -269,8 +272,7 @@ def main():
         if sc.code == 404 and module.params.get("state") == "absent":
             module.exit_json(changed=False)
 
-        if not has_project(module.params):
-            module.fail_json(msg="Project does not exist")
+
 
 
 ########################### Helper functions ###################################
