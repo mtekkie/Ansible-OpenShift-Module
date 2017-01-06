@@ -195,6 +195,8 @@ def main():
         if compliant (current,should_be):
             module.exit_json(changed=False, ansible_facts=current)
         else:
+            #Set resourceVersion in should_be.
+            should_be['metadata']['resourceVersion']=current['metadata']['resourceVersion']
             result = http_put(PATH, module, dict_to_json(should_be))
             facts = json_to_dict(result)
             module.exit_json(changed=True, ansible_facts=facts)
