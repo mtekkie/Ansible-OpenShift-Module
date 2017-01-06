@@ -3,7 +3,7 @@
 
 DOCUMENTATION = '''
 ---
-module: oc_imagestream
+module: oscp_imagestream
 short_description: Open Shift Service Account
 description:
     - Handles imagestreams in Open Shift Enterprise.
@@ -60,7 +60,7 @@ options:
 
 
 EXAMPLES = '''
-- oc_imagestream:
+- oscp_imagestream:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     project: masterminder

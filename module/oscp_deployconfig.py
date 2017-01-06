@@ -6,7 +6,7 @@
 
 DOCUMENTATION = '''
 ---
-module: oc_deployconfig
+module: oscp_deployconfig
 short_description: Open Shift Deployment Config
 description:
     - Build Config in Open Shift Enterprise.
@@ -117,7 +117,7 @@ options:
 
 
 EXAMPLES = '''
-- oc_deployconfig:
+- oscp_deployconfig:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     strategy:

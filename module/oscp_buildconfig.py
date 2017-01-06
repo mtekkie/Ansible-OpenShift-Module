@@ -6,7 +6,7 @@
 
 DOCUMENTATION = '''
 ---
-module: oc_buildconfig
+module: oscp_buildconfig
 short_description: Open Shift BuildConfig
 description:
     - Build Config in Open Shift Enterprise.
@@ -154,7 +154,7 @@ options:
 
 
 EXAMPLES = '''
-- oc_buildconfig:
+- oscp_buildconfig:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     name: abba

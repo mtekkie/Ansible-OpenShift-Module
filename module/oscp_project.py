@@ -3,7 +3,7 @@
 
 DOCUMENTATION = '''
 ---
-module: oc_project
+module: oscp_project
 short_description: Open Shift Project
 description:
     - Project in Open Shift Enterprise.
@@ -58,7 +58,7 @@ options:
 
 
 EXAMPLES = '''
-- oc_project:
+- oscp_project:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     project: masterminder
