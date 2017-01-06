@@ -56,6 +56,12 @@ options:
             - Name of Servcie Account
         required: true
         default: null
+    roles:
+        description:
+            - List of roles for servcie account
+        required: false
+        default: null
+
 '''
 
 
@@ -65,6 +71,10 @@ EXAMPLES = '''
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     project: masterminder
     name: servicethis
+    roles:
+      - system:image-builders
+      - system:deployment-controller
+      - system:job-controller
 '''
 
 RETURN = '''
@@ -89,7 +99,8 @@ def main():
             master_url              = dict(required=True),
             auth_token              = dict(required=True),
             project                 = dict(required=True),
-            name                    = dict(required=True)
+            name                    = dict(required=True),
+            roles                   = dict(required=False, default=[], type='list')
         )
     )
 
@@ -121,10 +132,14 @@ def main():
             return
 
         if compliant (current,should_be):
-            module.exit_json(changed=False, ansible_facts=current)
+            if not add_roles_to_serviceaccount(module.params.get("roles"), module):
+                module.exit_json(changed=False, ansible_facts=current)
+            else:
+                module.exit_json(changed=True, ansible_facts=current)
         else:
             result = http_put(PATH, module, dict_to_json(should_be))
             facts = json_to_dict(result)
+            add_roles_to_serviceaccount(module.params.get("roles"), module)
             module.exit_json(changed=True, ansible_facts=facts)
 
     except urllib2.HTTPError as sc:
@@ -135,17 +150,92 @@ def main():
         if sc.code == 404 and module.params.get("state") == "present":
             result = http_post(SERVICE, module, should_be_json)
             facts = json_to_dict(result)
+            add_roles_to_serviceaccount(module.params.get("roles"), module)
             module.exit_json(changed=True, ansible_facts=facts)
 
         if sc.code == 404 and module.params.get("state") == "absent":
             module.exit_json(changed=False)
 
+def add_roles_to_serviceaccount(roles, module):
+    changed = False
+    user = "system:serviceaccount:"+module.params["project"]+":"+module.params["name"]
+    for role in roles:
+        if not has_role(role, user, module):
+            add_role(role,user,module)
+            changed = True
+    return changed
+
 
 ########################### Helper functions ###################################
 #
-# This section contains helper fuctions v20170106
+# This section contains helper fuctions v20170106:3
 #
 ################################################################################
+
+def has_role(role_name, user, module):
+    path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+    try:
+        res = http_get(path, module)
+        rolebindings = json_to_dict(res)
+        if isinstance (rolebindings["userNames"], list):
+            for tst_usr in rolebindings.get("userNames"):
+                if tst_usr == user:
+                    return True
+    except urllib2.HTTPError as sc:
+        if sc.code == 404:
+            return False;
+        else:
+            module.fail_json(msg="Failed when finding roles for user server resp:"+sc.code)
+    return False
+
+def add_role(role_name, user, module):
+    if rolebinding_exist(role_name, module):
+        path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+        current_json=http_get(path, module)
+        current = json_to_dict (current_json)
+        if isinstance(current["userNames"], list):
+            current["userNames"].append(user)
+        else:
+            current["userNames"] = [user]
+        http_put(path,module,dict_to_json(current))
+    else:
+        path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings"
+        params = dict(role_name=role_name, user=user, project=module.params['project'] )
+        rolebinding_template='''
+        {
+            "kind": "RoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "$role_name",
+                "namespace": "$project"
+          },
+          "userNames": [
+            "$user"
+          ],
+          "groupNames": null,
+          "subjects": [],
+          "roleRef": {
+            "name": "$role_name"
+          }
+        }
+        '''
+        rolebinding = template_to_dict(rolebinding_template, params)
+
+        http_post(path, module, dict_to_json(rolebinding))
+    return
+
+
+def rolebinding_exist(role_name, module):
+    url="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+    try:
+        res = http_get(url, module)
+        return True
+    except urllib2.HTTPError as sc:
+        if sc.code == 404:
+            return False;
+        else:
+            module.fail_json(msg="Unexpected error ("+sc.code+") when checking role" + role_name)
+    return False
 
 
 def dict_to_json(in_dict):
@@ -169,6 +259,9 @@ def __clean_dict_from_nones_recursive(in_dict):
             ret=__clean_dict_from_nones_recursive(in_dict[key])
             if len(ret) > 0:
                 new_dict[key] = ret
+        elif isinstance(in_dict[key], list):
+            if len(in_dict[key]) > 0:
+                new_dict[key]=in_dict[key]
         elif in_dict[key] != 'None':
             new_dict[key]=in_dict[key]
     return new_dict
@@ -293,13 +386,16 @@ def http_request(method, path, module, data):
             msg = "Open Shift Reports Unprocessable Enitiy (422):"
             msg = msg + get_message_from_v1status(sc.readlines())
             module.fail_json(msg=msg)
+        elif sc.code == 400:
+            msg = "Open Shift Reports Bad Request (400):"
+            msg = msg + get_message_from_v1status(sc.readlines())
+            module.fail_json(msg=msg)
         else:
             raise sc
 
     except urllib2.URLError as ue:
         module.fail_json(msg="Open Shift Master is unreachable. Check connection and master_url setting.")
 ########################### End of helper functions ############################
-
 
 from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
