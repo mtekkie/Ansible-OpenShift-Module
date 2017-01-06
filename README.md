@@ -3,9 +3,7 @@ Ansible 2.x module for managing OpenShift
 
 It uses the restful API to create and manage resources, so there is no need to install oc on the server that you are running this from.
 
-The configuration is almost the same as you would find in the yaml spec section of the deployment config and build config.
-
-In most cases it is just to copy and paste what is there directly in to the module.
+The configuration is almost the same as you would find in the yaml spec section of the deployment config and build config. In most cases it is just to copy and paste what is there directly in to the tasks in the playbook.
 
 #### Pre-Requirements:
 An authentication token from a high privileged  service account.
