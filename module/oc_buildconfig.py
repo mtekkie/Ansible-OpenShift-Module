@@ -432,7 +432,7 @@ def http_request(method, path, module, data):
             raise sc
 
     except urllib2.URLError as ue:
-module.fail_json(msg="Open Shift Master is unreachable. Check connection and master_url setting.")
+        module.fail_json(msg="Open Shift Master is unreachable. Check connection and master_url setting.")
 ########################### End of helper functions ############################
 
 
