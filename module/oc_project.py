@@ -58,7 +58,7 @@ options:
 
 
 EXAMPLES = '''
-- oc_buildconfig:
+- oc_project:
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     project: masterminder
