@@ -68,7 +68,7 @@ EXAMPLES = '''
     master_url: https://funnybunny.middleware.se:8443
     auth_token: eyJhbGciOiJSUzI1NiIsInR5.....
     project: masterminder
-    name:
+    name: myconfigmap
     data:
       prometheus.yml: |-
         # my global config
@@ -104,7 +104,7 @@ def main():
             auth_token              = dict(required=True),
             project                 = dict(required=True),
             name                    = dict(required=True),
-            data                    = dict(required=True, default='{}', type='dict')
+            data                    = dict(default='{}', type='dict')
         )
     )
 
