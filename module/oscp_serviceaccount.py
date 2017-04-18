@@ -168,7 +168,7 @@ def add_roles_to_serviceaccount(roles, module):
 
 ########################### Helper functions ###################################
 #
-# This section contains helper fuctions v20170106:3
+# This section contains helper fuctions v20170418:0
 #
 ################################################################################
 
@@ -367,9 +367,12 @@ def http_request(method, path, module, data):
             req.add_header("Content-Type", "application/json")
             req.get_method = lambda: 'PUT'
 
-        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
 
-        content = urllib2.urlopen(req, context=gcontext).read()
+        content = urllib2.urlopen(req, context=ctx).read()
+
         return content
 
     except urllib2.HTTPError as sc:

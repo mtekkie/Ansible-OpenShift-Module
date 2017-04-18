@@ -134,9 +134,74 @@ def main():
 
 ########################### Helper functions ###################################
 #
-# This section contains helper fuctions v20170106
+# This section contains helper fuctions v20170418:0
 #
 ################################################################################
+
+def has_role(role_name, user, module):
+    path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+    try:
+        res = http_get(path, module)
+        rolebindings = json_to_dict(res)
+        if isinstance (rolebindings["userNames"], list):
+            for tst_usr in rolebindings.get("userNames"):
+                if tst_usr == user:
+                    return True
+    except urllib2.HTTPError as sc:
+        if sc.code == 404:
+            return False;
+        else:
+            module.fail_json(msg="Failed when finding roles for user server resp:"+sc.code)
+    return False
+
+def add_role(role_name, user, module):
+    if rolebinding_exist(role_name, module):
+        path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+        current_json=http_get(path, module)
+        current = json_to_dict (current_json)
+        if isinstance(current["userNames"], list):
+            current["userNames"].append(user)
+        else:
+            current["userNames"] = [user]
+        http_put(path,module,dict_to_json(current))
+    else:
+        path="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings"
+        params = dict(role_name=role_name, user=user, project=module.params['project'] )
+        rolebinding_template='''
+        {
+            "kind": "RoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "$role_name",
+                "namespace": "$project"
+          },
+          "userNames": [
+            "$user"
+          ],
+          "groupNames": null,
+          "subjects": [],
+          "roleRef": {
+            "name": "$role_name"
+          }
+        }
+        '''
+        rolebinding = template_to_dict(rolebinding_template, params)
+
+        http_post(path, module, dict_to_json(rolebinding))
+    return
+
+
+def rolebinding_exist(role_name, module):
+    url="/oapi/v1/namespaces/"+module.params.get("project")+"/rolebindings/"+role_name
+    try:
+        res = http_get(url, module)
+        return True
+    except urllib2.HTTPError as sc:
+        if sc.code == 404:
+            return False;
+        else:
+            module.fail_json(msg="Unexpected error ("+sc.code+") when checking role" + role_name)
+    return False
 
 
 def dict_to_json(in_dict):
@@ -160,6 +225,9 @@ def __clean_dict_from_nones_recursive(in_dict):
             ret=__clean_dict_from_nones_recursive(in_dict[key])
             if len(ret) > 0:
                 new_dict[key] = ret
+        elif isinstance(in_dict[key], list):
+            if len(in_dict[key]) > 0:
+                new_dict[key]=in_dict[key]
         elif in_dict[key] != 'None':
             new_dict[key]=in_dict[key]
     return new_dict
@@ -265,9 +333,12 @@ def http_request(method, path, module, data):
             req.add_header("Content-Type", "application/json")
             req.get_method = lambda: 'PUT'
 
-        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
 
-        content = urllib2.urlopen(req, context=gcontext).read()
+        content = urllib2.urlopen(req, context=ctx).read()
+
         return content
 
     except urllib2.HTTPError as sc:
@@ -282,6 +353,10 @@ def http_request(method, path, module, data):
             module.fail_json(msg=msg)
         elif sc.code == 422:
             msg = "Open Shift Reports Unprocessable Enitiy (422):"
+            msg = msg + get_message_from_v1status(sc.readlines())
+            module.fail_json(msg=msg)
+        elif sc.code == 400:
+            msg = "Open Shift Reports Bad Request (400):"
             msg = msg + get_message_from_v1status(sc.readlines())
             module.fail_json(msg=msg)
         else:
